@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VCF Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      width: 300px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    button {
+      background: #28a745;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #218838;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📇 VCF Generator</h2>
+    <input type="text" id="name" placeholder="Full Name">
+    <input type="text" id="org" placeholder="Organization">
+    <input type="text" id="title" placeholder="Job Title">
+    <input type="text" id="phone" placeholder="Phone Number">
+    <input type="email" id="email" placeholder="Email">
+    <input type="text" id="address" placeholder="Address">
+    <input type="url" id="url" placeholder="Website">
+    <button onclick="generateVCF()">Download VCF</button>
+  </div>
+
+  <script>
+    function generateVCF() {
+      let name = document.getElementById("name").value;
+      let org = document.getElementById("org").value;
+      let title = document.getElementById("title").value;
+      let phone = document.getElementById("phone").value;
+      let email = document.getElementById("email").value;
+      let address = document.getElementById("address").value;
+      let url = document.getElementById("url").value;
+
+      let vcfData = `BEGIN:VCARD
+VERSION:3.0
+FN:${name}
+ORG:${org}
+TITLE:${title}
+TEL:${phone}
+EMAIL:${email}
+ADR:${address}
+URL:${url}
+END:VCARD`;
+
+      let blob = new Blob([vcfData], { type: "text/vcard" });
+      let link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      link.download = name.replace(/\s+/g, "_") + ".vcf";
+      link.click();
+    }
+  </script>
+</body>
+</html>
