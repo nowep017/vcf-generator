@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>VCF Generator</title>
+  <title>VCF Generator (Multiple Contacts)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -10,7 +10,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       flex-direction: column;
     }
     .container {
@@ -18,7 +18,7 @@
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      width: 300px;
+      width: 350px;
     }
     input, button {
       width: 100%;
@@ -36,11 +36,19 @@
     button:hover {
       background: #218838;
     }
+    .contact-card {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      background: #fafafa;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>📇 VCF Generator</h2>
+    <h2>📇 Multi-Contact VCF Generator</h2>
+    
     <input type="text" id="name" placeholder="Full Name">
     <input type="text" id="org" placeholder="Organization">
     <input type="text" id="title" placeholder="Job Title">
@@ -48,11 +56,16 @@
     <input type="email" id="email" placeholder="Email">
     <input type="text" id="address" placeholder="Address">
     <input type="url" id="url" placeholder="Website">
-    <button onclick="generateVCF()">Download VCF</button>
+    
+    <button onclick="addContact()">➕ Add Contact</button>
+    <div id="contactList"></div>
+    <button onclick="downloadVCF()">⬇️ Download All Contacts (.vcf)</button>
   </div>
 
   <script>
-    function generateVCF() {
+    let contacts = [];
+
+    function addContact() {
       let name = document.getElementById("name").value;
       let org = document.getElementById("org").value;
       let title = document.getElementById("title").value;
@@ -61,21 +74,54 @@
       let address = document.getElementById("address").value;
       let url = document.getElementById("url").value;
 
-      let vcfData = `BEGIN:VCARD
+      if (!name) {
+        alert("Please enter at least a name!");
+        return;
+      }
+
+      let contact = { name, org, title, phone, email, address, url };
+      contacts.push(contact);
+
+      // Display added contact
+      let list = document.getElementById("contactList");
+      let div = document.createElement("div");
+      div.className = "contact-card";
+      div.innerText = `${name} - ${phone} - ${email}`;
+      list.appendChild(div);
+
+      // Clear form
+      document.getElementById("name").value = "";
+      document.getElementById("org").value = "";
+      document.getElementById("title").value = "";
+      document.getElementById("phone").value = "";
+      document.getElementById("email").value = "";
+      document.getElementById("address").value = "";
+      document.getElementById("url").value = "";
+    }
+
+    function downloadVCF() {
+      if (contacts.length === 0) {
+        alert("No contacts added yet!");
+        return;
+      }
+
+      let vcfData = contacts.map(c => 
+        `BEGIN:VCARD
 VERSION:3.0
-FN:${name}
-ORG:${org}
-TITLE:${title}
-TEL:${phone}
-EMAIL:${email}
-ADR:${address}
-URL:${url}
-END:VCARD`;
+FN:${c.name}
+ORG:${c.org}
+TITLE:${c.title}
+TEL:${c.phone}
+EMAIL:${c.email}
+ADR:${c.address}
+URL:${c.url}
+END:VCARD`
+      ).join("\n");
 
       let blob = new Blob([vcfData], { type: "text/vcard" });
       let link = document.createElement("a");
       link.href = window.URL.createObjectURL(blob);
-      link.download = name.replace(/\s+/g, "_") + ".vcf";
+      link.download = "contacts.vcf";
       link.click();
     }
   </script>
