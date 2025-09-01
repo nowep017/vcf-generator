@@ -120,18 +120,8 @@
       }
 
       // Add unique contact
-      contacts.push({ name, phone, email });
-
-      // Update contact list UI
-      const li = document.createElement("li");
-      li.textContent = `${name} - ${phone} - ${email}`;
-      document.getElementById("contactList").appendChild(li);
-      
-       // Clear input fields
-      document.getElementById("name").value = "";
-      document.getElementById("phone").value = "";
-      document.getElementById("email").value = "";
-     }
+      contacts.push({ name, org, title, phone, email, address, url });
+    
       let contact = { name, org, title, phone, email, address, url };
       contacts.push(contact);
       displayContact(contact);
@@ -143,7 +133,7 @@
       let list = document.getElementById("contactList");
       let div = document.createElement("div");
       div.className = "contact-card";
-      div.innerText = `${c.name} | ${c.phone} | ${c.email}`;
+      div.innerText = `${name}== 0`;
       list.appendChild(div);
     }
 
