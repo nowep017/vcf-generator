@@ -1,194 +1,177 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>VCF Generator (CSV + Excel + Manual)</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <title>VCF Generator Bot</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 0;
-      background: linear-gradient(135deg, #6a11cb, #2575fc);
-      color: #333;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #ff9800, #4caf50, #2196f3);
+      color: white;
     }
     .container {
-      background: white;
-      padding: 25px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 20px;
       border-radius: 15px;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-      width: 420px;
-      animation: fadeIn 0.8s ease-in-out;
+      max-width: 650px;
+      margin: auto;
     }
-    h2 {
-      text-align: center;
-      margin-bottom: 15px;
-      color: #2575fc;
-    }
-    input, button {
-      width: 100%;
+    input {
+      width: 80%;
       padding: 10px;
-      margin: 6px 0;
-      border: 1px solid #ddd;
+      margin: 5px 0;
       border-radius: 8px;
-      font-size: 14px;
+      border: none;
     }
     button {
-      background: #2575fc;
-      color: white;
-      font-weight: bold;
+      padding: 10px 20px;
+      margin: 10px;
       border: none;
+      border-radius: 8px;
       cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      background: #ffeb3b;
+      color: #333;
       transition: 0.3s;
     }
     button:hover {
-      background: #6a11cb;
+      background: #ffc107;
+      transform: scale(1.05);
     }
-    .contact-card {
-      border: 1px solid #ddd;
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: rgba(255, 255, 255, 0.2);
       padding: 8px;
-      margin: 8px 0;
-      border-radius: 6px;
-      background: #f7f9fc;
-      font-size: 13px;
+      margin: 5px 0;
+      border-radius: 5px;
+      cursor: pointer;
     }
-    .divider {
-      text-align: center;
-      margin: 15px 0;
-      font-weight: bold;
-      color: #555;
+    li:hover {
+      background: rgba(255, 255, 255, 0.35);
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    h2, h3 {
+      color: #ffeb3b;
+    }
+    .section {
+      margin-top: 20px;
+      text-align: left;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>📇 Multi-Contact VCF Generator</h2>
-    
-    <!-- Manual Entry -->
-    <input type="text" id="name" placeholder="Full Name">
-    <input type="text" id="org" placeholder="Organization">
-    <input type="text" id="title" placeholder="Job Title">
-    <input type="text" id="phone" placeholder="Phone Number">
-    <input type="email" id="email" placeholder="Email">
-    <input type="text" id="address" placeholder="Address">
-    <input type="url" id="url" placeholder="Website">
-    
+    <h2>📇 VCF Contact Generator</h2>
+
+    <input type="text" id="name" placeholder="Full Name" /><br>
+    <input type="text" id="phone" placeholder="Phone Number" /><br>
+    <input type="text" id="email" placeholder="Email Address" /><br>
+
     <button onclick="addContact()">➕ Add Contact</button>
-    
-    <div class="divider">OR Upload File</div>
-    <input type="file" id="fileInput" accept=".csv,.xlsx">
-    <button onclick="uploadFile()">📤 Upload & Add Contacts</button>
-    
-    <div id="contactList"></div>
-    <button onclick="downloadVCF()">⬇️ Download All Contacts (.vcf)</button>
+    <button onclick="downloadVCF()">📥 Download VCF</button>
+
+    <div class="section">
+      <h3>Contacts List:</h3>
+      <ul id="contactList"></ul>
+    </div>
+
+    <div class="section">
+      <h3>📂 Saved Files (Click to Re-Download)</h3>
+      <ul id="savedFiles"></ul>
+    </div>
   </div>
 
   <script>
     let contacts = [];
+    let savedFiles = JSON.parse(localStorage.getItem("vcfFiles")) || [];
+
+    // Load saved files on page load
+    window.onload = function () {
+      updateSavedFiles();
+    };
 
     function addContact() {
-      let name = document.getElementById("name").value;
-      let org = document.getElementById("org").value;
-      let title = document.getElementById("title").value;
-      let phone = document.getElementById("phone").value;
-      let email = document.getElementById("email").value;
-      let address = document.getElementById("address").value;
-      let url = document.getElementById("url").value;
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const email = document.getElementById("email").value.trim();
 
-      if (!name) {
-        alert("Please enter at least a name!");
+      if (!name || !phone) {
+        alert("⚠️ Name and Phone are required!");
         return;
       }
 
-      let contact = { name, org, title, phone, email, address, url };
-      contacts.push(contact);
-      displayContact(contact);
-
-      document.querySelectorAll("input").forEach(i => i.value = "");
-    }
-
-    function displayContact(c) {
-      let list = document.getElementById("contactList");
-      let div = document.createElement("div");
-      div.className = "contact-card";
-      div.innerText = `${c.name} | ${c.phone} | ${c.email}`;
-      list.appendChild(div);
-    }
-
-    function uploadFile() {
-      const fileInput = document.getElementById("fileInput");
-      if (fileInput.files.length === 0) {
-        alert("Please select a file!");
+      // ✅ Prevent duplicate phone numbers
+      const exists = contacts.some(contact => contact.phone === phone);
+      if (exists) {
+        alert("❌ This phone number already exists!");
         return;
       }
 
-      const file = fileInput.files[0];
-      const reader = new FileReader();
+      contacts.push({ name, phone, email });
 
-      if (file.name.endsWith(".csv")) {
-        reader.onload = function(e) {
-          const lines = e.target.result.split("\n").map(l => l.trim()).filter(l => l);
-          const headers = lines[0].split(",");
-          for (let i = 1; i < lines.length; i++) {
-            const data = lines[i].split(",");
-            let contact = {};
-            headers.forEach((h, idx) => {
-              contact[h.trim()] = data[idx] ? data[idx].trim() : "";
-            });
-            contacts.push(contact);
-            displayContact(contact);
-          }
-        };
-        reader.readAsText(file);
-      } else if (file.name.endsWith(".xlsx")) {
-        reader.onload = function(e) {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: "array" });
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const json = XLSX.utils.sheet_to_json(sheet);
-          json.forEach(contact => {
-            contacts.push(contact);
-            displayContact(contact);
-          });
-        };
-        reader.readAsArrayBuffer(file);
-      } else {
-        alert("Unsupported file format!");
-      }
+      // Update UI
+      const li = document.createElement("li");
+      li.textContent = `${name} - ${phone} - ${email}`;
+      document.getElementById("contactList").appendChild(li);
+
+      // Clear inputs
+      document.getElementById("name").value = "";
+      document.getElementById("phone").value = "";
+      document.getElementById("email").value = "";
     }
 
     function downloadVCF() {
       if (contacts.length === 0) {
-        alert("No contacts added yet!");
+        alert("⚠️ No contacts to export!");
         return;
       }
 
-      let vcfData = contacts.map(c => 
-        `BEGIN:VCARD
-VERSION:3.0
-FN:${c.name || ""}
-ORG:${c.org || ""}
-TITLE:${c.title || ""}
-TEL:${c.phone || ""}
-EMAIL:${c.email || ""}
-ADR:${c.address || ""}
-URL:${c.url || ""}
-END:VCARD`
-      ).join("\n");
+      let vcfData = "";
+      contacts.forEach(c => {
+        vcfData += "BEGIN:VCARD\n";
+        vcfData += "VERSION:3.0\n";
+        vcfData += `FN:${c.name}\n`;
+        vcfData += `TEL;TYPE=CELL:${c.phone}\n`;
+        if (c.email) vcfData += `EMAIL:${c.email}\n`;
+        vcfData += "END:VCARD\n";
+      });
 
-      let blob = new Blob([vcfData], { type: "text/vcard" });
-      let link = document.createElement("a");
-      link.href = window.URL.createObjectURL(blob);
-      link.download = "contacts.vcf";
-      link.click();
+      const fileName = `contacts_${new Date().getTime()}.vcf`;
+      triggerDownload(fileName, vcfData);
+
+      // Save file name + content in local storage
+      savedFiles.push({ fileName, content: vcfData });
+      localStorage.setItem("vcfFiles", JSON.stringify(savedFiles));
+      updateSavedFiles();
+
+      // Clear current contacts after export
+      contacts = [];
+      document.getElementById("contactList").innerHTML = "";
+    }
+
+    function triggerDownload(fileName, content) {
+      const blob = new Blob([content], { type: "text/vcard" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function updateSavedFiles() {
+      const list = document.getElementById("savedFiles");
+      list.innerHTML = "";
+      savedFiles.forEach(file => {
+        const li = document.createElement("li");
+        li.textContent = file.fileName;
+        li.onclick = () => triggerDownload(file.fileName, file.content);
+        list.appendChild(li);
+      });
     }
   </script>
 </body>
